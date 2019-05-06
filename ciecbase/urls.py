@@ -19,11 +19,11 @@ from django.conf.urls import include, url
 from main import views
 import os
 
-admin.site.site_header = "Cuotas, Ingresos y Egresos Condominales"
+admin.site.site_header = "CIEC Cuotas, Ingresos y Egresos Condominales"
 
 if os.environ.get('AMBIENTE') == "desarrollo":
     admin.site.site_title  = "CIEC DESARROLLO"
-    admin.site.index_title = "CIEC Bienvenidos"
+    admin.site.index_title = "CIEC Desarrollo"
 else:
     admin.site.site_title  = "CIEC PRODUCCION"
     admin.site.index_title = "CIEC Bienvenidos"

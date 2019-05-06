@@ -10,14 +10,17 @@ from Catalogos.models import TipoMovimiento, CuentaContable, Proveedore
 
 def dictfetchall(cursor):
 	desc = cursor.description
-	return [
-       dict(zip([col[0] for col in desc],row))
-       for row in cursor.fetchall()
-	]
+	if desc:
+		return [
+       		dict(zip([col[0] for col in desc],row))
+       		for row in cursor.fetchall()
+		]
+	else:
+		return None
 
 def execsql(consulta):
 	cursor = connection.cursor()
-	#print(consulta)
+	print(consulta)
 	cursor.execute(consulta)
 	result_list = dictfetchall(cursor)
 	cursor.close()
@@ -35,6 +38,7 @@ def run_acumuladosMensuales(condominio):
 			#Trae saldo inicial de cada cuenta
 			saldo_condominio = 0 
 			rows = execsql(Query.objects.get(id=4).sql)
+			print(rows)
 			#
 			#Por cada cuenta
 			for r in rows:
