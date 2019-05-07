@@ -1,5 +1,7 @@
 #!/usr/bin/env python
 """Django's command-line utility for administrative tasks."""
+"""prueba de cambio """
+
 import os
 import sys
 
