@@ -41,6 +41,7 @@ INSTALLED_APPS = [
     'Catalogos',
     'Procesos',
     'SadiCarnot10',
+    'SadiCarnot81',
 ]
 
 MIDDLEWARE = [

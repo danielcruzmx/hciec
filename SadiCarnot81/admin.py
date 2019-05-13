@@ -5,17 +5,17 @@ from django.http import HttpResponse
 from django.contrib.admin.templatetags.admin_list import _boolean_icon
 # Register your models here.
 
-from Procesos.procesosSADI10 import run_determinacionSaldos
+from Procesos.procesosSADI81 import run_determinacionSaldos_sadi81
 
-from SadiCarnot10.models     import Condomino, Estacionamiento, CuentaBanco, \
+from SadiCarnot81.models     import Condomino, Estacionamiento, CuentaBanco, \
                                     DetalleMovimiento, Documento, Movimiento, \
-                                    Registro, AcumuladoMes, CuotasCondominio
+                                    AcumuladoMes, CuotasCondominio, Registro
 
 class dontLog:
     def log_deletion(self, **kwargs):
         return
 
-class DetalleMovtoInlineB(admin.TabularInline):
+class DetalleMovtoInlineBO(admin.TabularInline):
 	model = DetalleMovimiento
 	fields = ['descripcion', 'monto', 'cuenta_contable', 'proveedor']
 	#list_display = ('cuenta_contable',)
@@ -31,14 +31,14 @@ class DetalleMovtoInlineB(admin.TabularInline):
 	#    return	CuentaContable.objects.filter(clave_mayor = '41')
 
 @admin.register(Movimiento)
-class MovtoAdminB(admin.ModelAdmin):
+class MovtoAdminBO(admin.ModelAdmin):
     list_display = ('id','fecha','concepto','retiro','deposito','condomino','detalle','conciliacion')
     #list_filter = ('fecha','condomino',)
     date_hierarchy = 'fecha'
     readonly_fields = ('detalle',)
     ordering = ('-fecha',)
     save_on_top = True
-    inlines = [DetalleMovtoInlineB]
+    inlines = [DetalleMovtoInlineBO]
     actions = ['export_as_csv']
 
     def concepto(self, request, obj=None, **kwargs):
@@ -55,7 +55,7 @@ class MovtoAdminB(admin.ModelAdmin):
         if(total != (request.retiro + request.deposito)):
             return False
         else:
-            return True
+        	return True
 
     conciliacion.boolean = True
 
@@ -74,36 +74,36 @@ class MovtoAdminB(admin.ModelAdmin):
 
         return response
 
-    export_as_csv.short_description = "Exportar Seleccion a CSV"
+    export_as_csv.short_description = "Exportar Seleccion a CSV"    
 
 @admin.register(CuentaBanco)
-class CuentaBancoAdminB(admin.ModelAdmin):
+class CuentaBancoAdminBO(admin.ModelAdmin):
     list_display = ('banco','clabe','apoderado')
 
 @admin.register(Condomino)
-class CondominoAdminB(admin.ModelAdmin):
-    list_display = ('depto','propietario','estado_cuenta','depositos','descarga')
+class CondominoAdminBO(admin.ModelAdmin):
+    list_display = ('depto','poseedor','estado_cuenta','depositos','descarga')
     search_fields = ('depto','propietario','poseedor')
     actions = ['determina_saldos']
 
     def determina_saldos(self, request, queryset):
         for obj in queryset:
             #print(" determina saldos %s " % obj.depto)
-            run_determinacionSaldos(obj)
+            run_determinacionSaldos_sadi81(obj)
         self.message_user(request, " Fin del proceso de determinacion de saldos ")
     
     determina_saldos.short_description = "Determinacion de Saldos"
 
 @admin.register(Estacionamiento)
-class EstacionamientoAdminB(admin.ModelAdmin):
+class EstacionamientoAdminBO(admin.ModelAdmin):
 	list_display = ('ubicacion',)
 
 @admin.register(Documento)
-class DocumentoAdminB(admin.ModelAdmin):
-    list_display = ('tipo_documento','folio','fecha_expedicion','monto_total')
+class DocumentoAdminBO(admin.ModelAdmin):
+	list_display = ('tipo_documento','folio','fecha_expedicion','monto_total')
 
 @admin.register(Registro)
-class AuxiliarAdminAB(dontLog, admin.ModelAdmin):
+class AuxiliarAdminABO(dontLog, admin.ModelAdmin):
     list_display = ('condomino','fecha','E','detalle_movimiento','Cargos','Depositos','Saldo')
     #list_filter = ('fecha', 'condomino',)
     #date_hierarchy = 'fecha'
@@ -128,12 +128,12 @@ class AuxiliarAdminAB(dontLog, admin.ModelAdmin):
     E.allow_tags = True 
 
 @admin.register(CuotasCondominio)
-class CuotasAdminAB(admin.ModelAdmin):
+class CuotasAdminABO(admin.ModelAdmin):
     list_display = ('descripcion', 'mes_inicial', 'mes_final', 'monto','cuenta_contable')
     ordering = ('-mes_inicial',)    
 
 @admin.register(AcumuladoMes)
-class AcumuladoAdminB(admin.ModelAdmin):
+class AcumuladoAdminBO(admin.ModelAdmin):
     list_display = ('cuenta_banco', 'mes','fecha_inicial', 'fecha_final', 'depositos','retiros', 'saldo')
     ordering = ('fecha_inicial', 'cuenta_banco',)
     #date_hierarchy = 'fecha_inicial'
@@ -157,12 +157,12 @@ class AcumuladoAdminB(admin.ModelAdmin):
 
     export_as_csv.short_description = "Exportar Seleccion a CSV"
 
-#admin.site.register(Movimiento, MovtoAdminB)
-#admin.site.register(CuentaBanco, CuentaBancoAdminB)
-#admin.site.register(Condomino, CondominoAdminB)
-#admin.site.register(Estacionamiento, EstacionamientoAdminB)
-#admin.site.register(Documento, DocumentoAdminB)
-#admin.site.register(Asiento, AuxiliarAdminAB)
-#admin.site.register(AcumuladoMes, AcumuladoAdminB)
-#admin.site.register(CuotasCondominio, CuotasAdminAB)
-
+'''admin.site.register(Movimiento, MovtoAdminBO)
+admin.site.register(CuentaBanco, CuentaBancoAdminBO)
+admin.site.register(Condomino, CondominoAdminBO)
+admin.site.register(Estacionamiento, EstacionamientoAdminBO)
+admin.site.register(Documento, DocumentoAdminBO)
+admin.site.register(Registro, AuxiliarAdminABO)
+admin.site.register(AcumuladoMes, AcumuladoAdminBO)
+admin.site.register(CuotasCondominio, CuotasAdminABO)
+'''

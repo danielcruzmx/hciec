@@ -14,17 +14,17 @@ class Estacionamiento(models.Model):
 
     class Meta:
         managed = True
-        db_table = 'sadi_estacionamiento'
+        db_table = 'sadiochouno_estacionamiento'
 
 class CuentaBanco(models.Model):
     cuenta = models.CharField(max_length=20)
     clabe = models.CharField(max_length=18)
     apoderado = models.CharField(max_length=60)
-    saldo = models.DecimalField(max_digits=10, decimal_places=2, blank=True, default=0, null=True, verbose_name = ('Saldo inicial'))
+    saldo = models.DecimalField(max_digits=10, decimal_places=2, blank=True, null=True, default=0, verbose_name = ('Saldo inicial'))
     fecha_saldo = models.DateField(blank=True, null=True)
     situacion = models.IntegerField(blank=True, null=True)
-    banco = models.ForeignKey(Banco, related_name='sadi_banco_cuenta', on_delete=models.PROTECT)
-    condominio = models.ForeignKey(Condominio, related_name='sadi_cuenta_condominio', on_delete=models.PROTECT)
+    banco = models.ForeignKey(Banco, related_name='sadiochouno_banco_cta', on_delete=models.PROTECT)
+    condominio = models.ForeignKey(Condominio, related_name='sadiochouno_cta_condominio', on_delete=models.PROTECT)
     tipo_cuenta = models.CharField(max_length=20)
 
     def __str__(self):
@@ -32,7 +32,7 @@ class CuentaBanco(models.Model):
 
     class Meta:
         managed = True
-        db_table = 'sadi_cuenta_banco'
+        db_table = 'sadiochouno_cuenta_banco'
         verbose_name_plural = "Cuentas bancarias"
 
 class Condomino(models.Model):
@@ -44,29 +44,30 @@ class Condomino(models.Model):
     telefono = models.CharField(max_length=30, blank=True, null=True)
     fecha_escrituracion = models.DateField(blank=True, null=True)
     referencia = models.DecimalField(max_digits=5, decimal_places=2, blank=True, null=True)
-    adeudo_inicial = models.DecimalField(max_digits=9, decimal_places=2, blank=True, null=True)
+    condominio = models.ForeignKey(Condominio, related_name='sadiochouno_condomino_condominio_id', on_delete=models.PROTECT)
+    indiviso = models.DecimalField(max_digits=10, decimal_places=4, blank=True, null=True)
+    adeudo_inicial = models.DecimalField(max_digits=9, decimal_places=2, blank=True, null=True, default=0)
     fecha_corte_saldo = models.DateField(blank=True, null=True)
     cargos = models.DecimalField(max_digits=9, decimal_places=2, blank=True, null=True,default = 0)
     pagos  = models.DecimalField(max_digits=9, decimal_places=2, blank=True, null=True,default = 0)
     saldo = models.DecimalField(max_digits=9, decimal_places=2, blank=True, null=True, default = 0)
-    condominio = models.ForeignKey(Condominio, related_name='sadi_condomino_condominio_id', on_delete=models.PROTECT)
-    estacionamiento = models.ManyToManyField(Estacionamiento, related_name='sadi_condomino_estacionamiento_id')
-
+    estacionamiento = models.ManyToManyField(Estacionamiento, related_name='sadiochouno_condomino_estac_id')
+    
     def __str__(self):
         return '%s %s' % (self.depto, self.poseedor)
 
     #http://127.0.0.1:8000/admin/c_olimpo/asiento/?condomino__id__exact=9
 
     def estado_cuenta(self):
-        return mark_safe('<a href="/admin/SadiCarnot10/registro/?condomino__id__exact=%d">Edo. de Cuenta</a>' % (self.id))
+        return mark_safe('<a href="/admin/SadiCarnot81/registro/?condomino__id__exact=%d">Edo. de Cuenta</a>' % (self.id))
 
     #http://127.0.0.1:8000/admin/c_olimpo/movimiento/?condomino__id__exact=10
 
     def depositos(self):
-        return mark_safe('<a href="/admin/SadiCarnot10/movimiento/?condomino__id__exact=%d">Depositos</a>' % (self.id))
+        return mark_safe('<a href="/admin/SadiCarnot81/movimiento/?condomino__id__exact=%d">Depositos view</a>' % (self.id))
 
     def descarga(self):
-        return mark_safe('<a href="/explorer/6/download?format=csv&params=depto:\'%s\'">Descarga *.csv</a>' % (self.depto))
+        return mark_safe('<a href="/explorer/5/download?format=csv&params=depto:\'%s\'">Descarga *.csv</a>' % (self.depto))
 
 
     estado_cuenta.allow_tags = True
@@ -75,7 +76,7 @@ class Condomino(models.Model):
 
     class Meta:
         managed = True
-        db_table = 'sadi_condomino'
+        db_table = 'sadiochouno_condomino'
         ordering = ['depto']
 
 class Documento(models.Model):
@@ -83,61 +84,60 @@ class Documento(models.Model):
     fecha_expedicion = models.DateField()
     monto_total = models.DecimalField(max_digits=9, decimal_places=2, blank=True, null=True, default=0)
     notas = models.CharField(max_length=45, blank=True, null=True)
-    situacion = models.ForeignKey(Situacion, blank=True, null=True, related_name='sadi_recibo_situacion_id', on_delete=models.PROTECT)
-    tipo_documento = models.ForeignKey(TipoDocumento, blank=True, null=True, related_name='sadi_recibo_tipodoc_id', on_delete=models.PROTECT)
+    situacion = models.ForeignKey(Situacion, blank=True, null=True, related_name='sadiochouno_recibo_situacion_id', on_delete=models.PROTECT)
+    tipo_documento = models.ForeignKey(TipoDocumento, blank=True, null=True, related_name='sadiochouno_recibo_tipodoc_id', on_delete=models.PROTECT)
 
     def __str__(self):
         return '%d %s' % (self.folio, self.tipo_documento)
 
     class Meta:
         managed = True
-        db_table = 'sadi_documento'
+        db_table = 'sadiochouno_documento'
 
 class Movimiento(models.Model):
-    cuenta_banco = models.ForeignKey(CuentaBanco, related_name='sadi_movimiento_cuenta_id', default = 2, on_delete=models.PROTECT)
+    cuenta_banco = models.ForeignKey(CuentaBanco, related_name='sadiochouno_mov_cuenta_id', default = 1, on_delete=models.PROTECT)
     fecha = models.DateField(blank=True, null=True)
-    tipo_movimiento = models.ForeignKey(TipoMovimiento, blank=True, null=True, related_name='sadi_movimiento_tipo_movimiento_id', on_delete=models.PROTECT)
+    tipo_movimiento = models.ForeignKey(TipoMovimiento, blank=True, null=True, related_name='sadiochouno_mov_tipo_mov_id', on_delete=models.PROTECT)
     descripcion = models.CharField(max_length=250, blank=True, null=True)
-    condomino = models.ForeignKey(Condomino, related_name='sadi_movimiento_condomino_id', on_delete=models.PROTECT)
+    condomino = models.ForeignKey(Condomino, related_name='sadiochouno_mov_condomino_id', on_delete=models.PROTECT)
     retiro = models.DecimalField(max_digits=9, decimal_places=2, blank=True, null=True, default=0)
-    deposito = models.DecimalField(max_digits=9, decimal_places=2, blank=True, null=True, default=500)
-    documento = models.ForeignKey(Documento, related_name='sadi_movimiento_documento_id', default=1, on_delete=models.PROTECT)
+    deposito = models.DecimalField(max_digits=9, decimal_places=2, blank=True, null=True, default=0)
+    documento = models.ForeignKey(Documento, related_name='sadiochouno_mov_documento_id', default=1, on_delete=models.PROTECT)
 
     def __str__(self):
         return u'%d %s %d %s' % (self.id, self.fecha.strftime('%d/%m/%Y'), self.deposito, self.descripcion[:15])
 
     class Meta:
         managed = True
-        db_table = 'sadi_movimiento'
-        ordering = ['fecha']    
-        verbose_name_plural = "Movimientos bancarios"
+        db_table = 'sadiochouno_movimiento'
+        ordering = ['fecha']
 
 class DetalleMovimiento(models.Model):
-    movimiento = models.ForeignKey(Movimiento, verbose_name = ('Movto'), on_delete = models.CASCADE, related_name='sadi_mov_detalle')
+    movimiento = models.ForeignKey(Movimiento, verbose_name = ('Movto'), on_delete = models.CASCADE, related_name='sadiochouno_mov_detalle')
     descripcion = models.CharField(max_length=250, blank=True, null=True)
     monto = models.DecimalField(max_digits=9, decimal_places=2, blank=True, null=True, default=0)
-    cuenta_contable =  models.ForeignKey(CuentaContable, verbose_name = ('Cuenta Contable Ingreso/Egreso'), on_delete = models.CASCADE, related_name='sadi_cta_detalle', limit_choices_to = Q(clave_mayor='41') | Q(clave_mayor='51') | Q(num_cuenta='2318'))
-    proveedor = models.ForeignKey(Proveedore, verbose_name = ('Proveedor'), on_delete = models.CASCADE, related_name='sadi_prov_detalle')
+    cuenta_contable =  models.ForeignKey(CuentaContable, verbose_name = ('Cuenta Contable Ingreso/Egreso'), on_delete = models.CASCADE, related_name='sadiochouno_cta_detalle', limit_choices_to = Q(clave_mayor='41') | Q(clave_mayor='51') | Q(num_cuenta='2318'))
+    proveedor = models.ForeignKey(Proveedore, verbose_name = ('Proveedor/Depto'), on_delete = models.CASCADE, related_name='sadiochouno_prov_detalle')
 
     def __str__(self):
         return '%s %s %s' % (self.descripcion, self.monto, self.cuenta_contable)
 
     class Meta:
         managed = True
-        db_table = 'sadi_detalle_movimiento'
+        db_table = 'sadiochouno_detalle_movimiento'
         ordering = ['movimiento']
 
 class Registro(models.Model):
     fecha = models.DateField(blank=True, null=True)
     fecha_vencimiento = models.DateField(blank=True, null=True)
-    tipo_movimiento = models.ForeignKey(TipoMovimiento, blank=True, null=True, related_name='sadi_auxiliar_tipo_movimiento_id', on_delete=models.PROTECT)
+    tipo_movimiento = models.ForeignKey(TipoMovimiento, blank=True, null=True, related_name='sadiochouno_aux_tipo_mov_id', on_delete=models.PROTECT)
     descripcion = models.CharField(max_length=250, blank=True, null=True)
-    debe = models.DecimalField(max_digits=9, decimal_places=2, blank=True, null=True, default=0)
-    haber = models.DecimalField(max_digits=9, decimal_places=2, blank=True, null=True, default=0)
+    debe = models.DecimalField(max_digits=9, decimal_places=2, blank=True, null=True, default=0, verbose_name = 'Depositos')
+    haber = models.DecimalField(max_digits=9, decimal_places=2, blank=True, null=True, default=0, verbose_name = 'Cargos' )
     saldo = models.DecimalField(max_digits=9, decimal_places=2, blank=True, null=True, default=0)
-    cuenta_contable =  models.ForeignKey(CuentaContable, verbose_name = ('Cuenta Contable'), on_delete = models.CASCADE, related_name='sadi_asiento_cuenta')
-    condomino = models.ForeignKey(Condomino, related_name='sadi_auxiliar_condomino_id', default=67, on_delete=models.PROTECT)
-    a_favor = models.ForeignKey(Proveedore, related_name='sadi_auxiliar_proveedor_id', default=1, on_delete=models.PROTECT)
+    cuenta_contable =  models.ForeignKey(CuentaContable, verbose_name = ('Cuenta Contable'), on_delete = models.CASCADE, related_name='sadiochouno_asiento_cuenta')
+    condomino = models.ForeignKey(Condomino, related_name='sadiochouno_aux_condomino_id', default=67, on_delete=models.PROTECT)
+    a_favor = models.ForeignKey(Proveedore, related_name='sadiochouno_aux_proveedor_id', default=1, on_delete=models.PROTECT)
 
     @property
     def detalle_movimiento(self):
@@ -148,7 +148,7 @@ class Registro(models.Model):
 
     class Meta:
         managed = True
-        db_table = 'sadi_registro'
+        db_table = 'sadiochouno_registro'
         ordering = ['fecha']
         verbose_name_plural = "Registros"
 
@@ -158,15 +158,15 @@ class CuotasCondominio(models.Model):
     mes_final = models.DateField(blank=True, null=True)
     fecha_vencimiento = models.DateField(blank=True, null=True)
     monto = models.DecimalField(max_digits=9, decimal_places=2, blank=True, null=True, default=0)
-    cuenta_contable =  models.ForeignKey(CuentaContable, verbose_name = ('Cuenta Contable'), on_delete = models.CASCADE, related_name='sadi_cuota_cuenta')
-    condomino = models.ManyToManyField(Condomino, related_name='sadi_cuotas_condomino_id')
+    cuenta_contable =  models.ForeignKey(CuentaContable, verbose_name = ('Cuenta Contable'), on_delete = models.CASCADE, related_name='sadiochouno_cuota_cuenta')
+    condomino = models.ManyToManyField(Condomino, related_name='sadiochouno_cuotas_condomino_id')
 
     def __str__(self):
         return u'%s %s %s %d %s' % (self.descripcion, self.mes_inicial.strftime('%m-%Y'), self.mes_final.strftime('%m-%Y'), self.monto, self.cuenta_contable)
 
     class Meta:
         managed = True
-        db_table = 'sadi_cuotas'
+        db_table = 'sadiochouno_cuotas'
         ordering = ['mes_inicial']
         verbose_name_plural = "Cuotas del condominio"
 
@@ -186,5 +186,6 @@ class AcumuladoMes(models.Model):
  
     class Meta:
         managed = True
-        db_table = 'sadi_acumulado_mes'
+        db_table = 'sadiochouno_acumulado_mes'
         verbose_name_plural = "Acumulados mensuales"
+

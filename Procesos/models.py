@@ -15,4 +15,4 @@ class PeriodoProceso(models.Model):
     class Meta:
         managed = True
         db_table = 'periodo_procesos'
-        verbose_name_plural = "Periodos"
+        verbose_name_plural = "Acumulados"
