@@ -3,6 +3,8 @@ from django.contrib import admin
 from django.utils.safestring import mark_safe
 from django.http import HttpResponse
 from django.contrib.admin.templatetags.admin_list import _boolean_icon
+from django.templatetags.static import static
+from django.utils.html import format_html
 # Register your models here.
 
 from Procesos.procesosSADI10 import run_determinacionSaldos
@@ -82,9 +84,24 @@ class CuentaBancoAdminB(admin.ModelAdmin):
 
 @admin.register(Condomino)
 class CondominoAdminB(admin.ModelAdmin):
-    list_display = ('depto','propietario','estado_cuenta','depositos','descarga')
+    list_display = ('depto','propietario','adeudo_inicio','cuotas','depositos','detalle','adeudo_actual','estado_cuenta','descarga')
     search_fields = ('depto','propietario','poseedor')
     actions = ['determina_saldos']
+
+    def adeudo_inicio(self, request, obj=None, **kwargs):
+        return "{:,}".format(request.adeudo_inicial)
+
+    def cuotas(self, request, obj=None, **kwargs):
+        cargos = request.cargos - request.adeudo_inicial
+        return "{:,}".format(cargos)
+
+    def depositos(self, request, obj=None, **kwargs):
+        pagos = request.pagos
+        return "{:,}".format(pagos)
+
+    def adeudo_actual(self, request, obj=None, **kwargs):
+        return "{:,}".format(request.saldo)
+
 
     def determina_saldos(self, request, queryset):
         for obj in queryset:
@@ -120,8 +137,20 @@ class AuxiliarAdminAB(dontLog, admin.ModelAdmin):
         return "{:,}".format(request.saldo)
 
     def E(self, request, obj=None, **kwargs):
+        icon = '''
+            <svg width="16" height="16" viewBox="0 0 1792 1792" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+                <defs>
+                    <g id="right">
+                        <path d="M1413 896q0-27-18-45l-91-91-362-362q-18-18-45-18t-45 18l-91 91q-18 18-18 45t18 45l189 189h-502q-26 0-45 19t-19 45v128q0 26 19 45t45 19h502l-189 189q-19 19-19 45t19 45l91 91q18 18 45 18t45-18l362-362 91-91q18-18 18-45zm251 0q0 209-103 385.5t-279.5 279.5-385.5 103-385.5-103-279.5-279.5-103-385.5 103-385.5 279.5-279.5 385.5-103 385.5 103 279.5 279.5 103 385.5z"/>
+                    </g>
+                </defs>
+                <use xlink:href="#right" x="0" y="0" fill="#447e9b" />
+            </svg>
+        ''' 
+        #text = format_html('<img src="{}" alt="view">', icon)
         if(request.debe > 0):
-            return _boolean_icon(True)
+            #return _boolean_icon(True)
+            return mark_safe('%s' % icon)
         else:
             return ""
 

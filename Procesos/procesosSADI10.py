@@ -61,12 +61,16 @@ def run_determinacionSaldos(condomino):
 		#
 		#Agrega adeudo inicial
 		if not condomino.depto == '0000':
-			adeudo = condomino.adeudo_inicial
-			reg = Registro(fecha = condomino.fecha_corte_saldo, fecha_vencimiento=condomino.fecha_corte_saldo, \
+			ade = condomino.adeudo_inicial
+			sal = 0
+			deb = 0
+			sal = sal + deb - ade
+			#adeudo = condomino.adeudo_inicial
+			reg_i = Registro(fecha = condomino.fecha_corte_saldo, fecha_vencimiento=condomino.fecha_corte_saldo, \
 							tipo_movimiento = tipo, descripcion='SALDO INICIAL A LA FECHA', \
-							debe = 0, haber=adeudo, saldo=adeudo, cuenta_contable=cuenta, \
+							debe = deb, haber=ade, saldo=sal, cuenta_contable=cuenta, \
 							condomino = condomino, a_favor = prove)
-			reg.save()
+			reg_i.save()
 		#
 		#Agrega adeudos por cuotas
 		rows = CuotasCondominio.objects.all().order_by('mes_inicial')
@@ -79,37 +83,38 @@ def run_determinacionSaldos(condomino):
 				for x in range (0, delta.days + 1):
 					fecha = base + timedelta(days=x)
 					if fecha.day == 1:
-						reg = Registro(fecha = fecha, fecha_vencimiento=fecha, \
+						reg_a = Registro(fecha = fecha, fecha_vencimiento=fecha, \
 								tipo_movimiento = tipo, descripcion=r.descripcion , \
 								debe = 0, haber=r.monto, saldo=0, cuenta_contable=r.cuenta_contable, \
 								condomino = condomino, a_favor = prove)
-						reg.save()
+						reg_a.save()
 		#
 		#Agrega depositos por movimiento de banco
 		if not condomino.depto == '0000':
 			movtos = Movimiento.objects.filter(condomino__id=condomino.id)
 			for m in movtos:
-				reg = Registro(fecha = m.fecha, fecha_vencimiento=m.fecha, \
+				reg_m = Registro(fecha = m.fecha, fecha_vencimiento=m.fecha, \
 						tipo_movimiento = m.tipo_movimiento, descripcion=m.descripcion , \
 						debe = m.deposito, haber=0, saldo=0, cuenta_contable=r.cuenta_contable, \
 						condomino = condomino, a_favor = prove)
-				reg.save()
+				reg_m.save()
 			#
-			#Recalcula saldos
-			saldo = 0
-			cargos = 0
-			depositos = 0
-			rec = Registro.objects.filter(condomino__id=condomino.id).order_by('fecha')
-			for r in rec:
-				cargos = cargos + r.haber
-				depositos = depositos + r.debe
-				saldo = saldo + r.haber - r.debe
-				r.saldo = saldo
-				r.save()
+	#Recalcula saldos
+	if not condomino.depto == '0000':
+		sal = 0
+		car = 0
+		dep = 0
+		rec = Registro.objects.filter(condomino__id=condomino.id).order_by('fecha','id')
+		for rr in rec:
+			car = car + rr.haber
+			dep = dep + rr.debe
+			sal = sal + rr.haber - rr.debe
+			rr.saldo = sal
+			rr.save()
 			
-			reg = Condomino.objects.get(id=condomino.id)
-			reg.cargos = cargos
-			reg.pagos = depositos
-			reg.saldo = saldo
-			reg.save()
+		reg_c = Condomino.objects.get(id=condomino.id)
+		reg_c.cargos = car
+		reg_c.pagos  = dep
+		reg_c.saldo  = sal
+		reg_c.save()
 

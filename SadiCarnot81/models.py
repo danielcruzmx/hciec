@@ -3,6 +3,8 @@ from Catalogos.models import Banco, Condominio, Proveedore, TipoDocumento, \
                              Situacion, TipoMovimiento, CuentaContable
 from django.db.models import Q
 from django.utils.safestring import mark_safe
+from django.templatetags.static import static
+from django.utils.html import format_html
 
 # Create your models here.
 
@@ -59,19 +61,33 @@ class Condomino(models.Model):
     #http://127.0.0.1:8000/admin/c_olimpo/asiento/?condomino__id__exact=9
 
     def estado_cuenta(self):
-        return mark_safe('<a href="/admin/SadiCarnot81/registro/?condomino__id__exact=%d">Edo. de Cuenta</a>' % (self.id))
+        icon_url = static('admin/img/icon-viewlink.svg')
+        text = format_html('<img src="{}" alt="view">', icon_url)
+        return mark_safe('<a href="/admin/SadiCarnot81/registro/?condomino__id__exact=%d">%s</a>' % (self.id, text))
 
     #http://127.0.0.1:8000/admin/c_olimpo/movimiento/?condomino__id__exact=10
 
-    def depositos(self):
-        return mark_safe('<a href="/admin/SadiCarnot81/movimiento/?condomino__id__exact=%d">Depositos view</a>' % (self.id))
+    def detalle(self):
+        icon_url = static('admin/img/icon-viewlink.svg')
+        text = format_html('<img src="{}" alt="view">', icon_url)
+        return mark_safe('<a href="/admin/SadiCarnot81/movimiento/?condomino__id__exact=%d">%s</a>' % (self.id, text))
 
     def descarga(self):
-        return mark_safe('<a href="/explorer/5/download?format=csv&params=depto:\'%s\'">Descarga *.csv</a>' % (self.depto))
+        text = '''
+        <svg width="16" height="16" viewBox="0 0 1792 1792" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+            <defs>
+                <g id="down">
+                    <path d="M1412 897q0-27-18-45l-91-91q-18-18-45-18t-45 18l-189 189v-502q0-26-19-45t-45-19h-128q-26 0-45 19t-19 45v502l-189-189q-19-19-45-19t-45 19l-91 91q-18 18-18 45t18 45l362 362 91 91q18 18 45 18t45-18l91-91 362-362q18-18 18-45zm252-1q0 209-103 385.5t-279.5 279.5-385.5 103-385.5-103-279.5-279.5-103-385.5 103-385.5 279.5-279.5 385.5-103 385.5 103 279.5 279.5 103 385.5z"/>
+                </g>
+            </defs>
+            <use xlink:href="#down" x="0" y="0" fill="#447e9b" />
+        </svg>
+        '''
+        return mark_safe('<a href="/explorer/5/download?format=csv&params=depto:\'%s\'">%s</a>' % (self.depto, text))
 
 
     estado_cuenta.allow_tags = True
-    depositos.allow_tags = True
+    detalle.allow_tags = True
     descarga.allow_tags = True
 
     class Meta:
@@ -111,6 +127,7 @@ class Movimiento(models.Model):
         managed = True
         db_table = 'sadiochouno_movimiento'
         ordering = ['fecha']
+        verbose_name_plural = "Movimientos bancarios"
 
 class DetalleMovimiento(models.Model):
     movimiento = models.ForeignKey(Movimiento, verbose_name = ('Movto'), on_delete = models.CASCADE, related_name='sadiochouno_mov_detalle')
@@ -130,21 +147,21 @@ class DetalleMovimiento(models.Model):
 class Registro(models.Model):
     fecha = models.DateField(blank=True, null=True)
     fecha_vencimiento = models.DateField(blank=True, null=True)
-    tipo_movimiento = models.ForeignKey(TipoMovimiento, blank=True, null=True, related_name='sadiochouno_aux_tipo_mov_id', on_delete=models.PROTECT)
+    #tipo_movimiento = models.ForeignKey(TipoMovimiento, blank=True, null=True, related_name='sadiochouno_aux_tipo_mov_id')
     descripcion = models.CharField(max_length=250, blank=True, null=True)
     debe = models.DecimalField(max_digits=9, decimal_places=2, blank=True, null=True, default=0, verbose_name = 'Depositos')
     haber = models.DecimalField(max_digits=9, decimal_places=2, blank=True, null=True, default=0, verbose_name = 'Cargos' )
     saldo = models.DecimalField(max_digits=9, decimal_places=2, blank=True, null=True, default=0)
-    cuenta_contable =  models.ForeignKey(CuentaContable, verbose_name = ('Cuenta Contable'), on_delete = models.CASCADE, related_name='sadiochouno_asiento_cuenta')
+    #cuenta_contable =  models.ForeignKey(CuentaContable, verbose_name = ('Cuenta Contable'), on_delete = models.PROTECT, related_name='sadiochouno_asiento_cuenta')
     condomino = models.ForeignKey(Condomino, related_name='sadiochouno_aux_condomino_id', default=67, on_delete=models.PROTECT)
-    a_favor = models.ForeignKey(Proveedore, related_name='sadiochouno_aux_proveedor_id', default=1, on_delete=models.PROTECT)
+    #a_favor = models.ForeignKey(Proveedore, related_name='sadiochouno_aux_proveedor_id', default=1, on_delete=models.PROTECT)
 
     @property
     def detalle_movimiento(self):
-         return "%s %s" % ( self.tipo_movimiento, self.descripcion )
+         return "%s" % (self.descripcion)
 
     def __str__(self):
-        return u'%d %s %d %d %s %s' % (self.id, self.fecha.strftime('%d/%m/%Y'), self.debe, self.haber, self.descripcion[:15], self.cuenta_contable)
+        return u'%d %s %d %d %d %s' % (self.id, self.fecha.strftime('%d/%m/%Y'), self.debe, self.haber, self.saldo, self.descripcion[:15])
 
     class Meta:
         managed = True
